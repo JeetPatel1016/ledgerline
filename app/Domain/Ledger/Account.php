@@ -11,16 +11,23 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 /**
  * @property int $id
  * @property string $name
+ * @property string|null $code Names a system account, e.g. 'fees_cad'.
  * @property AccountType $type
  * @property Currency $currency
  * @property bool $allow_negative
  * @property int $balance Cached sum of entries, in minor units, positive in the type's normal direction.
  * @property int $version Incremented on every posting that touches the account.
  */
-#[Fillable(['name', 'type', 'currency', 'allow_negative'])]
+#[Fillable(['name', 'code', 'type', 'currency', 'allow_negative'])]
 class Account extends Model
 {
     protected $attributes = ['balance' => 0, 'version' => 0, 'allow_negative' => false];
+
+    /** The revenue account that collects fees in $currency. */
+    public static function fees(Currency $currency): ?self
+    {
+        return self::where('code', 'fees_'.strtolower($currency->value))->first();
+    }
 
     /** @return HasMany<Entry, $this> */
     public function entries(): HasMany
