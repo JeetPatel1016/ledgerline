@@ -3,12 +3,12 @@
 Tick tasks as they're done. One milestone at a time; each ends with a green build and a commit.
 
 ## M1: Skeleton
-- [ ] Laravel 11 app, PHP 8.3, `declare(strict_types=1)` convention
-- [ ] Docker: nginx + php-fpm, worker (supervisord), Reverb, postgres 16, redis 7
-- [ ] Inertia + React + TypeScript + Tailwind via Vite
-- [ ] Pint, Larastan (PHPStan level 8), Pest set up
-- [ ] GitHub Actions: composer install, Pint, PHPStan, Pest
-- [ ] `.env.example`, README stub
+- [x] Laravel 13 app, PHP 8.3, `declare(strict_types=1)` convention
+- [x] Docker: nginx + php-fpm, worker (supervisord), Reverb, postgres 16, redis 7
+- [x] Inertia + React + TypeScript + Tailwind via Vite
+- [x] Pint, Larastan (PHPStan level 8), Pest set up
+- [x] GitHub Actions: composer install, Pint, PHPStan, Pest
+- [x] `.env.example`, README stub
 
 ## M2: Ledger core
 - [ ] Migrations: accounts, transactions, entries, audit_logs (bigint amounts)
@@ -66,3 +66,4 @@ Tick tasks as they're done. One milestone at a time; each ends with a green buil
 
 ## Session log
 <!-- YYYY-MM-DD: what was done; open items -->
+- 2026-11-23: M1 done. Laravel 13 (not 11: every 11.x release has open security advisories); standard Laravel layout at repo root, SPEC and TASKS in `docs/`. Docker stack (nginx, php-fpm, worker, reverb, postgres 16 + test DB, redis 7, node for Vite); Inertia + React + TS strict + Tailwind 4; Pint (strict_types), Larastan L8, Pest on Postgres; CI workflow written but not yet run on GitHub (no remote). Open: Pest is slow on the Windows bind mount (~15s for one test).

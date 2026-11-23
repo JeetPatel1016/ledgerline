@@ -1,15 +1,21 @@
 # Ledgerline: instructions for coding sessions
 
-Ledgerline is a portfolio project: a double-entry ledger and payments API (Laravel 11 on Nginx + PHP-FPM, PostgreSQL, Redis, React via Inertia). The full spec is in `SPEC.md`; the working checklist is in `TASKS.md`. Read both at the start of every session.
+Ledgerline is a portfolio project: a double-entry ledger and payments API (Laravel 13 on Nginx + PHP-FPM, PostgreSQL, Redis, React via Inertia). The full spec is in `docs/SPEC.md`; the working checklist is in `docs/TASKS.md`. Read both at the start of every session.
 
 ## Goal
 A public GitHub repo that shows fintech-grade correctness: balanced double-entry, idempotent money movement, safe concurrency, reconciliation and an audit trail, with green CI, a live demo and a README that explains the accounting rules in plain words. Correctness over feature count.
 
 ## How to work in this repo
-- Work **one milestone at a time** from `TASKS.md`. Don't start the next milestone until the current one builds, its tests pass and it's committed.
-- At the end of each task, tick it in `TASKS.md` and add a one-line note under "Session log".
-- `SPEC.md` is the source of truth. If a decision changes it, update `SPEC.md` in the same change and explain why in the commit message.
+- Work **one milestone at a time** from `docs/TASKS.md`. Don't start the next milestone until the current one builds, its tests pass and it's committed.
+- At the end of each task, tick it in `docs/TASKS.md` and add a one-line note under "Session log".
+- `docs/SPEC.md` is the source of truth. If a decision changes it, update it in the same change and explain why in the commit message.
 - Ask before adding a dependency that isn't in the spec's stack.
+
+## Keep it simple (Karpathy guidelines)
+- **Think first.** State assumptions; if something is ambiguous, ask instead of guessing.
+- **Simplest thing that works.** No speculative abstractions, options or config. If it could be half the code, rewrite it.
+- **Surgical changes.** Touch only what the task needs; don't reformat or "improve" neighbouring code.
+- **Goal-driven.** Define the check that proves a task is done (a test, a command) before writing the code.
 
 ## Non-negotiable accounting rules
 - Amounts are integers in minor units (cents), stored as `bigint`. Never floats, never decimals for amounts.
@@ -20,6 +26,7 @@ A public GitHub repo that shows fintech-grade correctness: balanced double-entry
 - Any change to these rules needs a test proving the new behaviour.
 
 ## Layout
+Standard Laravel layout at the repo root. `docs/` holds `SPEC.md` and `TASKS.md`.
 ```
 app/Domain/Ledger      Accounts, Transactions, Entries, LedgerService (posting rules)
 app/Domain/Payments    Holds, Transfers, Fees, FX
@@ -32,11 +39,15 @@ tests/Unit, tests/Feature, e2e/ (Playwright)
 ```
 
 ## Commands (keep these working; update if they change)
+Run from the repo root. PHP and Node run in containers; nothing but Docker is needed on the host.
 ```
-docker compose up -d            # nginx, php-fpm, worker, reverb, postgres, redis
+cp .env.example .env
+docker compose up -d                               # nginx, php-fpm, worker, reverb, postgres, redis
 docker compose exec app composer install
+docker compose exec app php artisan key:generate
 docker compose exec app php artisan migrate --seed
-npm install && npm run dev       # Vite for Inertia/React
+docker compose run --rm node npm install
+docker compose up node                             # Vite dev server (or: docker compose run --rm node npm run build)
 docker compose exec app ./vendor/bin/pint --test
 docker compose exec app ./vendor/bin/phpstan analyse
 docker compose exec app ./vendor/bin/pest
