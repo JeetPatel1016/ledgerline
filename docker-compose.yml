@@ -1,0 +1,81 @@
+name: ledgerline
+
+x-php: &php
+  build:
+    context: .
+    dockerfile: docker/php/Dockerfile
+  image: ledgerline-php
+  volumes:
+    - ./:/var/www/html
+  depends_on:
+    postgres:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+
+services:
+  app:
+    <<: *php
+    command: php-fpm
+
+  nginx:
+    image: nginx:1.27-alpine
+    ports:
+      - "${APP_PORT:-8080}:80"
+    volumes:
+      - ./:/var/www/html:ro
+      - ./docker/nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - app
+
+  worker:
+    <<: *php
+    command: supervisord -c /etc/supervisord.conf
+
+  reverb:
+    <<: *php
+    command: php artisan reverb:start --host=0.0.0.0 --port=8081
+    ports:
+      - "${REVERB_PORT:-8081}:8081"
+
+  # Vite dev server / asset builds. Not started by default: `docker compose up node`
+  # or `docker compose run --rm node npm run build`.
+  node:
+    image: node:22-alpine
+    working_dir: /app
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    volumes:
+      - ./:/app
+    ports:
+      - "${VITE_PORT:-5173}:5173"
+    profiles: ["frontend"]
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-ledgerline}
+      POSTGRES_USER: ${DB_USERNAME:-ledgerline}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-secret}
+    ports:
+      - "${FORWARD_DB_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/postgres/init-testing-db.sql:/docker-entrypoint-initdb.d/10-testing.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-ledgerline} -d ${DB_DATABASE:-ledgerline}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "${FORWARD_REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata:
