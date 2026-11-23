@@ -1,6 +1,6 @@
 # Ledgerline
 
-[![CI](https://github.com/OWNER/ledgerline/actions/workflows/ci.yml/badge.svg)](https://github.com/OWNER/ledgerline/actions/workflows/ci.yml)
+[![CI](https://github.com/JeetPatel1016/ledgerline/actions/workflows/ci.yml/badge.svg)](https://github.com/JeetPatel1016/ledgerline/actions/workflows/ci.yml)
 
 A double-entry ledger and payments API: multi-currency accounts, idempotent transfers, holds and captures, bank reconciliation and an append-only audit trail, with a live-updating dashboard.
 
