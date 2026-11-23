@@ -17,7 +17,9 @@ COPY docker/supervisor/supervisord.conf /etc/supervisord.conf
 ARG UID=1000
 ARG GID=1000
 RUN addgroup -g ${GID} app && adduser -D -u ${UID} -G app app \
-    && sed -i 's/^user = www-data/user = app/; s/^group = www-data/group = app/' /usr/local/etc/php-fpm.d/www.conf
+    && sed -i 's/^user = www-data/user = app/; s/^group = www-data/group = app/' /usr/local/etc/php-fpm.d/www.conf \
+    # Owned by app so the vendor volume mounted here is writable by composer.
+    && mkdir -p /var/www/html/vendor && chown app:app /var/www/html/vendor
 
 WORKDIR /var/www/html
 USER app

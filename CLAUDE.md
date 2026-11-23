@@ -39,7 +39,7 @@ tests/Unit, tests/Feature, e2e/ (Playwright)
 ```
 
 ## Commands (keep these working; update if they change)
-Run from the repo root. PHP and Node run in containers; nothing but Docker is needed on the host.
+Run from the repo root. PHP and Node run in containers; nothing but Docker is needed on the host. `vendor/` and `node_modules/` are Docker volumes, so run composer/npm only inside containers.
 ```
 cp .env.example .env
 docker compose up -d                               # nginx, php-fpm, worker, reverb, postgres, redis

@@ -12,7 +12,7 @@ PHP 8.3 · Laravel 13 · PostgreSQL 16 · Redis 7 · Nginx + PHP-FPM · React + 
 
 ## Running locally
 
-Requires Docker. PHP and Node run inside containers, so nothing else needs to be installed.
+Requires Docker. PHP and Node run inside containers, so nothing else needs to be installed. `vendor/` and `node_modules/` live in Docker volumes (reading them through the Windows/macOS file share was ~30x slower), so always run `composer` and `npm` inside the containers as shown.
 
 ```bash
 cp .env.example .env

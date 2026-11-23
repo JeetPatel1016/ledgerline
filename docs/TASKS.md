@@ -66,4 +66,4 @@ Tick tasks as they're done. One milestone at a time; each ends with a green buil
 
 ## Session log
 <!-- YYYY-MM-DD: what was done; open items -->
-- 2026-11-23: M1 done. Laravel 13 (not 11: every 11.x release has open security advisories); standard Laravel layout at repo root, SPEC and TASKS in `docs/`. Docker stack (nginx, php-fpm, worker, reverb, postgres 16 + test DB, redis 7, node for Vite); Inertia + React + TS strict + Tailwind 4; Pint (strict_types), Larastan L8, Pest on Postgres; CI workflow written but not yet run on GitHub (no remote). Open: Pest is slow on the Windows bind mount (~15s for one test).
+- 2026-11-23: M1 done. Laravel 13 (not 11: every 11.x release has open security advisories); standard Laravel layout at repo root, SPEC and TASKS in `docs/`. Docker stack (nginx, php-fpm, worker, reverb, postgres 16 + test DB, redis 7, node for Vite); Inertia + React + TS strict + Tailwind 4; Pint (strict_types), Larastan L8, Pest on Postgres; CI workflow written but not yet run on GitHub (no remote). Later: CI green on GitHub (fixed Pages→pages case bug); vendor/ and node_modules/ moved to Docker volumes, page load 6.2s→0.2s, Pest ~1s.
