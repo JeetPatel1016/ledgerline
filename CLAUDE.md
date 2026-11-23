@@ -12,6 +12,7 @@ A public GitHub repo that shows fintech-grade correctness: balanced double-entry
 - Ask before adding a dependency that isn't in the spec's stack.
 
 ## Keep it simple (Karpathy guidelines)
+If the `karpathy-guidelines` skill (Agent Protocols plugin) is available, load it at the start of the session. Either way:
 - **Think first.** State assumptions; if something is ambiguous, ask instead of guessing.
 - **Simplest thing that works.** No speculative abstractions, options or config. If it could be half the code, rewrite it.
 - **Surgical changes.** Touch only what the task needs; don't reformat or "improve" neighbouring code.
@@ -61,6 +62,10 @@ npx playwright test
 - Money values travel as `{ "amount": 1250, "currency": "CAD" }` in the API; format only in the UI.
 - TypeScript strict on the frontend; no `any` without a comment.
 - Never log tokens or full card-like data.
+- Ledger sign convention: an account's `balance` is positive in its type's normal direction (assets/expenses grow with debits; liabilities/equity/revenue with credits). Customer wallets are liabilities. An entry's currency is always its account's currency.
+- Money moves only through `LedgerService::post()` / `reverse()` (`app/Domain/Ledger`); never write entries or balances directly. Domain errors are `LedgerException` (named constructors).
+- Give Eloquent models `@property` docblocks; Larastan does not see enum casts without them.
+- Inertia pages live in lowercase `resources/js/pages/` (Linux CI is case-sensitive).
 
 ## Testing rules
 - Pest unit tests for every posting rule (balanced, append-only, reversal, fees, FX rounding).
@@ -68,6 +73,9 @@ npx playwright test
 - The parallel-withdrawal concurrency test must stay green.
 - Playwright E2E for the dashboard flows listed in the spec.
 - A change isn't done until Pint, PHPStan and Pest pass.
+- Tests run on Postgres (`ledgerline_testing`) with `RefreshDatabase` for both `tests/Unit` and `tests/Feature`. Helpers in `tests/Pest.php`: `ledger()`, `account($type, $currency, $allowNegative)`, `fund($account, $amount)`.
+- `RefreshDatabase` never commits, so deferred constraint triggers don't fire on their own; tests force them with `DB::statement('SET CONSTRAINTS ALL IMMEDIATE')`.
+- The concurrency test needs real commits and parallel connections, so it can't use `RefreshDatabase` transactions.
 
 ## Git
 - Small commits with conventional messages: `feat(ledger): enforce balanced entries per currency`.

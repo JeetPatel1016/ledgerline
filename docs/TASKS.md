@@ -64,6 +64,21 @@ Tick tasks as they're done. One milestone at a time; each ends with a green buil
 - [ ] Monthly PDF statements
 - [ ] k6 load test results in README
 
+## Next up
+Status: M1 and M2 done, CI green on `main`. Start **M3: Transfers API**.
+
+Starting points for M3:
+- Install Sanctum with `php artisan install:api` (Laravel 13 ships without API routes). Sanctum is in the spec's stack; no need to ask.
+- Transfers call `LedgerService::post()`; don't duplicate posting logic. The Idempotency-Key handling (same key + same body → original response, different body → 409) belongs at the API layer. The ledger already rejects a reused key with a unique violation, which is the backstop.
+- Fees: add the fee lines to the same transaction as the transfer, crediting a fees revenue account, so the transfer and its fee post atomically.
+- Map `LedgerException` and DB constraint violations to the single error shape `{ "error": { "code", "message", "details" } }`. LedgerException doesn't carry a code yet; add one when the API needs it.
+- Open from M2: two reversals of the same transaction arriving at once both pass the `alreadyReversed` pre-check, and the loser fails on the unique `reverses_id` index with a raw `UniqueConstraintViolationException`. Map that to the "already reversed" error.
+- Concurrency test (20 parallel withdrawals, 10 affordable): `RefreshDatabase` wraps each test in a transaction that never commits, so this test needs real commits and separate DB connections or processes, plus its own cleanup.
+
+Other open items:
+- CI warns that `actions/checkout@v4`, `setup-node@v4` and `cache@v4` target the deprecated Node 20. Bump them when convenient.
+- Larastan doesn't analyse `tests/` or `config/` (Pest's `$this` and Laravel's stock config don't pass level 8).
+
 ## Session log
 <!-- YYYY-MM-DD: what was done; open items -->
 - 2026-11-23: M1 done. Laravel 13 (not 11: every 11.x release has open security advisories); standard Laravel layout at repo root, SPEC and TASKS in `docs/`. Docker stack (nginx, php-fpm, worker, reverb, postgres 16 + test DB, redis 7, node for Vite); Inertia + React + TS strict + Tailwind 4; Pint (strict_types), Larastan L8, Pest on Postgres; CI workflow written but not yet run on GitHub (no remote). Later: CI green on GitHub (fixed Pages→pages case bug); vendor/ and node_modules/ moved to Docker volumes, page load 6.2s→0.2s, Pest ~1s.
