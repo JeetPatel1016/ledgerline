@@ -6,7 +6,7 @@ Drop this file into the new repo (as `SPEC.md`, or paste it into the repo's `CLA
 A double-entry ledger and payments API: multi-currency accounts, idempotent transfers, holds and captures, bank reconciliation and an append-only audit trail, with a live-updating dashboard.
 
 ## Stack
-- **Backend:** PHP 8.3, Laravel 11, PostgreSQL 16, Redis 7
+- **Backend:** PHP 8.3, Laravel 13, PostgreSQL 16, Redis 7
 - **Web server:** Nginx + PHP-FPM (LEMP)
 - **Frontend:** React + TypeScript via Inertia.js, Tailwind
 - **Real-time:** Laravel Reverb (WebSockets) + Laravel Echo
@@ -14,6 +14,8 @@ A double-entry ledger and payments API: multi-currency accounts, idempotent tran
 - **API docs:** OpenAPI via Scribe or L5-Swagger; GraphQL read API with Lighthouse (stretch)
 - **Quality:** Pest (unit + feature), PHPStan (level 8 via Larastan), Laravel Pint, Playwright (E2E)
 - **Infra:** Docker (nginx, php-fpm, worker, reverb, postgres, redis), docker-compose, GitHub Actions; deploy to a small VPS or AWS EC2
+
+> **Changed 2026-11-23:** the spec originally said Laravel 11. Every Laravel 11 release now carries open security advisories (11.x is past end of security support) and Composer refuses to install it, so the project uses Laravel 13, which requires PHP 8.3 and keeps the rest of the stack unchanged.
 
 ## Core accounting rules
 - Amounts are **integers in minor units** (cents). Never floats.
@@ -54,7 +56,7 @@ Same idempotency rules as Hookline: same key + same body returns the original re
 - A Pest test fires 20 parallel withdrawals at an account that can only afford 10 and asserts exactly 10 succeed and the balance never goes negative.
 
 ## Milestones
-1. **Skeleton (day 1):** Laravel 11 app, Docker (nginx + php-fpm + postgres + redis), Inertia + React + TS, Pint + PHPStan + Pest in GitHub Actions.
+1. **Skeleton (day 1):** Laravel 13 app, Docker (nginx + php-fpm + postgres + redis), Inertia + React + TS, Pint + PHPStan + Pest in GitHub Actions.
 2. **Ledger core (day 2):** accounts, transactions, entries, balance invariant, reversal; thorough Pest tests for every rule above.
 3. **Transfers API (day 3):** idempotent transfers, fees, row locking, the parallel-withdrawal test, consistent error format.
 4. **Holds and FX (day 4):** authorize, capture (full and partial), void, hold expiry job; FX rates table and conversion.
