@@ -36,4 +36,10 @@ docker compose exec app ./vendor/bin/pest
 
 ## Accounting rules (in plain words)
 
-_Written up in full as the ledger lands (M2–M4)._ The short version: money is stored as whole cents, every transaction's debits equal its credits, entries are never edited or deleted, and every money-moving request is idempotent.
+- **Money is whole cents.** Amounts are integers in minor units (`1250` = $12.50), stored as `bigint`. No floats, ever.
+- **Every transaction balances.** A transaction is two or more entries; for each currency, the debits add up to exactly the credits. The service checks this before writing, and a Postgres constraint trigger checks it again at commit, so even a bug or a hand-written SQL insert can't leave the books unbalanced.
+- **Debits and credits mean what accountants mean.** Asset and expense accounts grow with debits; liability, equity and revenue accounts grow with credits. A customer's wallet is a liability (we owe them the money), so a deposit *credits* it.
+- **Entries are never edited or deleted.** The database rejects `UPDATE`, `DELETE` and `TRUNCATE` on entries and on the audit log. A mistake is fixed by posting a *reversal*: a new transaction with every entry flipped, linked to the original. A transaction can be reversed once, and a reversal can't be reversed.
+- **Balances can't go negative** unless the account is explicitly allowed to (enforced in the service and by a `CHECK` constraint).
+- **Cached balances are checked nightly.** Each account keeps a cached `balance` and `version`, updated in the same DB transaction as its entries, with the rows locked in ascending id order. `php artisan ledger:verify-balances` (scheduled at 02:00) recomputes every balance from its entries and fails loudly on any drift.
+- **Every money-moving request is idempotent** (API, M3).
