@@ -25,7 +25,7 @@ A double-entry ledger and payments API: multi-currency accounts, idempotent tran
 - Accounts can't go negative unless their type allows it (e.g. `liability` or `revenue` normal balances).
 
 ## Data model
-- **Account:** id, name, type (asset | liability | equity | revenue | expense), currency (CAD | USD), allowNegative, balance (cached), version, createdAt
+- **Account:** id, name, code (nullable, unique; names system accounts such as `fees_cad`), type (asset | liability | equity | revenue | expense), currency (CAD | USD), allowNegative, balance (cached), version, createdAt
 - **Transaction:** id, kind (transfer | hold | capture | void | fee | fx | reversal), status (posted | pending | voided), idempotencyKey (unique), reversesId (nullable), metadata (JSONB), postedAt, createdBy
 - **Entry:** id, transactionId, accountId, direction (debit | credit), amount (bigint), currency, createdAt
 - **Hold:** id, accountId, amount, currency, status (active | captured | voided | expired), expiresAt, transactionId
@@ -50,6 +50,8 @@ A double-entry ledger and payments API: multi-currency accounts, idempotent tran
 | GET | /v1/reconciliation/imports/{id} | Matched vs unmatched lines |
 
 Same idempotency rules as Hookline: same key + same body returns the original result; same key + different body returns 409.
+
+> **Decided 2026-11-23 (M3):** routes are served under Laravel's `/api` prefix (`POST /api/v1/transfers`), which keeps them apart from the Inertia web routes. A transfer debits `from` by amount + fee and credits `to` by amount and the currency's fees revenue account by fee, all in one transaction. Fees accounts are found by a new nullable unique `Account.code` (`fees_cad`, `fees_usd`), created by the seeder. The idempotency key is stored as the transaction's `idempotencyKey`, with a hash of the request in its metadata. No separate table is needed, and a failed request doesn't use up its key.
 
 ## Concurrency
 - Wrap every money movement in a DB transaction and lock the affected account rows with `lockForUpdate()`, always in a consistent order (by account id) to avoid deadlocks.

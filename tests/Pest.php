@@ -14,6 +14,8 @@ use Illuminate\Support\Str;
 use Tests\TestCase;
 
 pest()->extend(TestCase::class)->use(RefreshDatabase::class)->in('Feature', 'Unit');
+// Real commits across separate processes; the tests manage their own schema.
+pest()->extend(TestCase::class)->in('Concurrency');
 
 function ledger(): LedgerService
 {
