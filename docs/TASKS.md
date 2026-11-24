@@ -28,6 +28,7 @@ Tick tasks as they're done. One milestone at a time; each ends with a green buil
 - [x] `lockForUpdate()` in ascending account-id order
 - [x] Concurrency test: 20 parallel withdrawals, only 10 affordable, balance never negative
 - [x] Consistent error format
+- [x] Dashboard slice: session login, accounts list + create, account page with entries, transfer form
 
 ## M4: Holds and FX
 - [ ] Holds: authorize, capture (full/partial), void
@@ -35,20 +36,19 @@ Tick tasks as they're done. One milestone at a time; each ends with a green buil
 - [ ] Hold expiry scheduled job
 - [ ] FX rates table + `POST /v1/fx/convert` (rate saved on the transaction)
 - [ ] Rounding rules documented and tested
+- [ ] Dashboard slice: holds (authorize, capture, void) with available balance; FX convert form
 
 ## M5: Reconciliation
 - [ ] CSV upload endpoint + StatementImport/StatementLine tables
 - [ ] Queued matching job (amount + date window + description similarity)
-- [ ] Matched / unmatched / ignored view, manual match
+- [ ] Dashboard slice: upload screen, matched / unmatched / ignored view, manual match
 - [ ] Tests with sample CSVs
 
-## M6: Dashboard + real-time
-- [ ] Accounts list with balances and available balances
+## M6: Real-time + dashboard polish
 - [ ] Transaction feed updating live over Reverb
 - [ ] Transfer detail with its entries
-- [ ] Reconciliation screen
 - [ ] Audit log view
-- [ ] Empty, loading and error states
+- [ ] Empty, loading and error states across all screens
 
 ## M7: E2E, docs, deploy
 - [ ] Playwright: make a transfer, see live update, reverse it, import a statement
@@ -65,10 +65,11 @@ Tick tasks as they're done. One milestone at a time; each ends with a green buil
 - [ ] k6 load test results in README
 
 ## Next up
-Status: M1, M2 and M3 done locally (Pint, PHPStan, 60 Pest tests green). M3 is on branch `claude/karpathy-skills-installed-da4dfe`, not yet pushed, so CI hasn't run it. Start **M4: Holds and FX**.
+Status: M1 to M3 done, including M3's dashboard slice (67 Pest tests). Start **M4: Holds and FX**, API and dashboard slice together.
 
 Starting points for M4:
-- Holds and FX endpoints move money, so they need an `Idempotency-Key`. Reuse `App\Http\Idempotency` (`key()`, `hash()`, `replay()`) the way `TransferController` does, including the `UniqueConstraintViolationException` → replay fallback for racing duplicates.
+- Holds and FX endpoints move money, so they need an `Idempotency-Key`. Wrap the service call in `Idempotency::once($request, fn ($key, $metadata) => ...)`, as both `TransferController`s do (API and web). It handles replays, 409s and racing duplicates.
+- Dashboard slice: web controllers live in `app/Http/Controllers/Web`, pages in `resources/js/pages`, and forms post via Inertia `useForm`. Money-moving forms keep one `crypto.randomUUID()` Idempotency-Key until they succeed (see `TransferForm.tsx`). Domain errors come back as a `transfer`-style form error.
 - `GET /api/v1/accounts/{id}` doesn't return an available balance yet. Add `available_balance` to `AccountResource` once holds exist.
 - New domain errors: add a `LedgerException` named constructor with an `errorCode`. `ApiError::from()` maps it to a 422.
 - Concurrency tests live in `tests/Concurrency` (no `RefreshDatabase`; `migrate:fresh` before and after). `withdraw.php` shows how to run one posting per process.
@@ -86,3 +87,4 @@ Other open items:
 - 2026-11-23: M1 done. Laravel 13 (not 11: every 11.x release has open security advisories); standard Laravel layout at repo root, SPEC and TASKS in `docs/`. Docker stack (nginx, php-fpm, worker, reverb, postgres 16 + test DB, redis 7, node for Vite); Inertia + React + TS strict + Tailwind 4; Pint (strict_types), Larastan L8, Pest on Postgres; CI workflow written but not yet run on GitHub (no remote). Later: CI green on GitHub (fixed Pages→pages case bug); vendor/ and node_modules/ moved to Docker volumes, page load 6.2s→0.2s, Pest ~1s.
 - 2026-11-23: M2 done. Ledger in `app/Domain/Ledger` (enums, models, `LedgerService::post/reverse/balanceMismatches`). DB guards: deferred constraint trigger (>=2 entries, balanced per currency), append-only triggers on entries and audit_logs, CHECK for non-negative balances, unique `reverses_id`. `ledger:verify-balances` scheduled 02:00. 31 Pest tests; deferred trigger also verified on a real commit. Decision: balances are signed by the account type's normal direction; entry currency always equals account currency.
 - 2026-11-23: M3 done. Sanctum (`install:api`, routes under `/api/v1`, `php artisan api:token <email>`); accounts endpoints with cursor-paginated entries; `TransferService` (`app/Domain/Payments`) posts amount + fee in one transaction, with the fee credited to the `fees_cad`/`fees_usd` revenue account (new `accounts.code`, seeded). Idempotency stores the key and a request hash on the ledger transaction (repeat → original, different body → 409, a failed request doesn't use up its key). `ApiError` gives one error shape; `LedgerException` now has `errorCode`. Lock-order test, plus a 20-process concurrency test (10 of 20 succeed; all 20 go through when `lockForUpdate` is removed). 60 tests.
+- 2026-11-24: Plan change: the dashboard now grows a slice per milestone (SPEC updated). M3 slice: session login (seeded test@example.com / password), accounts list + create, account page with cursor-paginated entries, transfer form that sends a per-attempt Idempotency-Key through the same `Idempotency::once()` as the API. Checked in a browser: login, create account, transfer with fee, insufficient-funds error, entries page. 67 tests.

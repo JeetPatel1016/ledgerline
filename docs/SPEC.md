@@ -60,11 +60,13 @@ Same idempotency rules as Hookline: same key + same body returns the original re
 ## Milestones
 1. **Skeleton (day 1):** Laravel 13 app, Docker (nginx + php-fpm + postgres + redis), Inertia + React + TS, Pint + PHPStan + Pest in GitHub Actions.
 2. **Ledger core (day 2):** accounts, transactions, entries, balance invariant, reversal; thorough Pest tests for every rule above.
-3. **Transfers API (day 3):** idempotent transfers, fees, row locking, the parallel-withdrawal test, consistent error format.
-4. **Holds and FX (day 4):** authorize, capture (full and partial), void, hold expiry job; FX rates table and conversion.
-5. **Reconciliation (day 5):** CSV upload, queued matching (amount + date window + description similarity), matched/unmatched view, manual match.
-6. **Dashboard + real-time (day 6):** accounts and balances, transaction feed live over Reverb, transfer detail with entries, reconciliation screen, audit log view.
+3. **Transfers API (day 3):** idempotent transfers, fees, row locking, the parallel-withdrawal test, consistent error format. Dashboard: login, accounts, entries, transfer form.
+4. **Holds and FX (day 4):** authorize, capture (full and partial), void, hold expiry job; FX rates table and conversion. Dashboard: holds and FX forms.
+5. **Reconciliation (day 5):** CSV upload, queued matching (amount + date window + description similarity), matched/unmatched view, manual match. Dashboard: the reconciliation screen.
+6. **Real-time + dashboard polish (day 6):** transaction feed live over Reverb, transfer detail with entries, audit log view, empty/loading/error states.
 7. **E2E, docs, deploy (day 7):** Playwright (make a transfer, see live update, reverse it, import a statement), OpenAPI docs, README with GIF + diagram, deploy with a seeded demo org.
+
+> **Changed 2026-11-24:** the dashboard is now built a slice at a time with each milestone (M3 to M5), so every feature can be tried in the UI as it lands, not only through the API. Pages are Inertia + React and call the same domain services as the API (no API token in the browser), behind a simple session login. M6 keeps the real-time feed and polish.
 
 ## Stretch
 - GraphQL read API with Lighthouse (accounts, entries, statements).

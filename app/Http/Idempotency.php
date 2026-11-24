@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Http;
 
 use App\Domain\Ledger\Transaction;
+use Closure;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
 
 /**
@@ -14,7 +16,31 @@ use Illuminate\Http\Request;
  */
 final class Idempotency
 {
-    public static function key(Request $request): string
+    /**
+     * Post at most once per Idempotency-Key. A repeat of the same request returns the
+     * transaction the first one created; the same key with a different request is a 409.
+     *
+     * @param  Closure(string, array<string, mixed>): Transaction  $post  receives the key and metadata to store
+     */
+    public static function once(Request $request, Closure $post): Transaction
+    {
+        $key = self::key($request);
+        $hash = self::hash($request);
+
+        $transaction = self::replay($key, $hash);
+        if ($transaction !== null) {
+            return $transaction;
+        }
+
+        try {
+            return $post($key, ['request_hash' => $hash]);
+        } catch (UniqueConstraintViolationException $e) {
+            // A concurrent request with the same key committed first.
+            return self::replay($key, $hash) ?? throw $e;
+        }
+    }
+
+    private static function key(Request $request): string
     {
         $key = (string) $request->header('Idempotency-Key');
         if ($key === '' || strlen($key) > 255) {
@@ -25,7 +51,7 @@ final class Idempotency
     }
 
     /** What makes two requests "the same": method, path and body. */
-    public static function hash(Request $request): string
+    private static function hash(Request $request): string
     {
         $body = $request->all();
         ksort($body);
@@ -33,11 +59,7 @@ final class Idempotency
         return hash('sha256', $request->method().' '.$request->path().' '.json_encode($body));
     }
 
-    /**
-     * The transaction an earlier request with this key created, or null if there is none.
-     * A key reused with a different request is a conflict.
-     */
-    public static function replay(string $key, string $hash): ?Transaction
+    private static function replay(string $key, string $hash): ?Transaction
     {
         $transaction = Transaction::with('entries')->where('idempotency_key', $key)->first();
         if ($transaction !== null && ($transaction->metadata['request_hash'] ?? null) !== $hash) {
